@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentForge Studio V2</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="app-login">
+  <div class="login-card">
+    <h1><i class="fas fa-feather-alt"></i> ContentForge</h1>
+    <p>Nền tảng tạo nội dung SEO chuyên nghiệp</p>
+    <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="login-user" placeholder="admin" style="font-size:16px"></div>
+    <div class="form-group"><label>Mật khẩu</label><input type="password" id="login-pass" placeholder="••••••" style="font-size:16px"></div>
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:.5rem"><i class="fas fa-sign-in-alt"></i> Đăng nhập</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-main" class="hidden">
+  <header id="app-header">
+    <div class="header-left"><i class="fas fa-feather-alt" style="color:var(--accent);font-size:1.25rem"></i><h1>ContentForge Studio V2</h1></div>
+    <div class="header-right"><span class="user-info" id="user-display"></span><button class="btn btn-sm btn-secondary" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button></div>
+  </header>
+  <div id="pipeline-view-banner" class="hidden" style="background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;padding:.5rem 1rem;display:flex;align-items:center;justify-content:space-between">
+    <span id="pipeline-view-title" style="font-size:.875rem;font-weight:600"></span>
+    <button class="btn btn-sm" onclick="backToForm()" style="background:rgba(255,255,255,0.2);color:#fff;border:none"><i class="fas fa-arrow-left"></i> Quay lại form</button>
+  </div>
+  <nav id="nav-tabs">
+    <button class="nav-tab active" data-tab="single" onclick="switchTab('single')"><i class="fas fa-pen-fancy"></i> Viết bài</button>
+    <button class="nav-tab" data-tab="batch" onclick="switchTab('batch')"><i class="fas fa-layer-group"></i> Viết hàng loạt</button>
+    <button class="nav-tab" data-tab="history" onclick="switchTab('history')"><i class="fas fa-clock-rotate-left"></i> Lịch sử</button>
+    <button class="nav-tab hidden" data-tab="admin" onclick="switchTab('admin')" id="admin-tab"><i class="fas fa-cog"></i> Quản trị</button>
+  </nav>
+
+  <!-- PROGRESS BAR (Single Mode) -->
+  <div class="progress-steps" id="progress-bar">
+    <div class="step-dot active" data-step="1">1</div><div class="step-line"></div>
+    <div class="step-dot" data-step="2">2</div><div class="step-line"></div>
+    <div class="step-dot" data-step="3">3</div><div class="step-line"></div>
+    <div class="step-dot" data-step="4">4</div><div class="step-line"></div>
+    <div class="step-dot" data-step="5">5</div><div class="step-line"></div>
+    <div class="step-dot" data-step="6">6</div><div class="step-line"></div>
+    <div class="step-dot" data-step="7">7</div>
+  </div>
+
+  <div id="app-layout">
+  <div id="main-content">
+    <!-- ═══ TAB: SINGLE MODE ═══ -->
+    <div class="tab-content active" id="tab-single">
+      <!-- STEP 1 -->
+      <div id="step-1" class="step-panel">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-edit"></i> Bước 1 — Nhập liệu</div>
+          <div class="form-group"><label>Lĩnh vực *</label><input id="s-field" placeholder="VD: Bất động sản, Y tế, Công nghệ..."></div>
+          <div class="form-group"><label>Công ty / Thương hiệu</label><input id="s-company" placeholder="Tên công ty (nếu có)"></div>
+          <div class="form-group"><label>Từ khóa chính * <span id="kw-dup-status"></span></label><input id="s-keyword" placeholder="VD: mua nhà trả góp" oninput="checkDuplicate()"></div>
+          <div id="kw-dup-warning" class="warning-banner hidden"></div>
+          <div class="form-group"><label>Văn phong</label><input id="s-style" placeholder="VD: chuyên gia, thân thiện, hài hước..."></div>
+          <div class="form-group"><label>Từ khóa bổ sung</label><textarea id="s-extra" rows="2" placeholder="Mỗi từ khóa cách bởi dấu phẩy"></textarea></div>
+          <div class="form-group"><label>Thông tin tham khảo</label><textarea id="s-reference" rows="3" placeholder="Dán nội dung tham khảo (max 6000 ký tự)" maxlength="6000"></textarea></div>
+          <div class="form-group"><label>Chọn Topic</label>
+            <select id="s-topic"><option value="">— Không chọn —</option></select>
+          </div>
+
+          <div class="toggle-card" onclick="toggleSwitch('review-toggle')" style="margin-bottom:.75rem">
+            <div><strong>Chế độ review</strong><br><small id="review-label" style="color:var(--text2)">Duyệt thủ công</small></div>
+            <div class="toggle-switch" id="review-toggle"></div>
+          </div>
+          <div class="toggle-card" onclick="toggleSwitch('image-toggle')" style="margin-bottom:.75rem">
+            <div><strong>Tạo hình ảnh minh họa</strong><br><small style="color:var(--text2)">AI tạo ảnh cho mỗi heading</small></div>
+            <div class="toggle-switch" id="image-toggle"></div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible('adv-opts')"><i class="fas fa-chevron-right"></i> Tùy chọn nâng cao</div>
+          <div class="collapsible-body" id="adv-opts">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:.5rem 0">
+              <div class="form-group"><label>Bot phân tích</label><select id="s-intentBot"></select></div>
+              <div class="form-group"><label>Bot dàn ý</label><select id="s-outlineBot"></select></div>
+              <div class="form-group"><label>Bot đánh giá</label><select id="s-evalBot"></select></div>
+              <div class="form-group"><label>Bot viết bài</label><select id="s-articleBot"></select></div>
+              <div class="form-group"><label>Bot prompt ảnh</label><select id="s-imagePromptBot"></select></div>
+              <div class="form-group"><label>Bot ảnh</label><select id="s-imageBot"></select></div>
+            </div>
+          </div>
+          <div class="toggle-card" onclick="toggleSwitch('s-review-toggle')" style="margin-top:.75rem">
+            <div><strong>Chế độ review</strong><br><small id="s-review-label" style="color:var(--text2)">Duyệt thủ công — pipeline sẽ dừng để bạn xem outline</small></div>
+            <div class="toggle-switch" id="s-review-toggle"></div>
+          </div>
+
+          <!-- Internal Links Section -->
+          <div class="collapsible-header" onclick="toggleCollapsible('s-internal-links')" style="margin-top:.75rem"><i class="fas fa-chevron-right"></i> 🔗 Internal Links</div>
+          <div class="collapsible-body open" id="s-internal-links">
+            <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;cursor:pointer">
+              <input type="checkbox" id="s-enable-links" checked> Tự động chèn internal link vào bài viết
+            </label>
+            <div id="s-urls-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:.5rem;margin-bottom:.75rem;background:var(--surface2)"></div>
+            <p style="font-size:.75rem;color:var(--text2);margin-bottom:.5rem">⭐ = URL ưu tiên (luôn chèn vào bài)</p>
+            <details style="margin-bottom:.75rem">
+              <summary style="cursor:pointer;font-weight:600;font-size:.875rem">➕ Thêm URL mới</summary>
+              <div style="padding:.5rem 0">
+                <div class="form-group"><label>URL *</label><input id="s-new-url" placeholder="https://example.com/bai-viet"></div>
+                <div class="form-group"><label>Tiêu đề *</label><input id="s-new-url-title" placeholder="Tên bài viết"></div>
+                <div class="form-group"><label>Keyword</label><input id="s-new-url-kw" placeholder="Từ khóa liên quan"></div>
+                <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;cursor:pointer">
+                  <input type="checkbox" id="s-new-url-priority"> URL ưu tiên (luôn chèn)
+                </label>
+                <button class="btn btn-sm btn-primary" onclick="addSingleUrl('s')"><i class="fas fa-plus"></i> Thêm URL</button>
+              </div>
+            </details>
+            <details style="margin-bottom:.5rem">
+              <summary style="cursor:pointer;font-weight:600;font-size:.875rem">⚡ Thêm nhanh (mỗi dòng: URL | Tiêu đề)</summary>
+              <div style="padding:.5rem 0">
+                <textarea id="s-bulk-urls" rows="3" placeholder="https://example.com/bai-1 | Bài viết 1&#10;https://example.com/bai-2 | Bài viết 2" style="font-size:.85rem"></textarea>
+                <button class="btn btn-sm btn-primary" onclick="addBulkUrls('s')" style="margin-top:.375rem"><i class="fas fa-plus"></i> Thêm tất cả</button>
+              </div>
+            </details>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="startPipeline()" id="btn-start" style="margin-top:1rem"><i class="fas fa-rocket"></i> <span class="btn-text">Bắt đầu tạo nội dung</span></button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Intent -->
+      <div id="step-2" class="step-panel hidden">
+        <div class="card"><div class="card-header"><i class="fas fa-brain"></i> Bước 2 — Phân tích ý định tìm kiếm</div><div id="intent-result" class="loading-overlay"><div class="spinner"></div>Đang phân tích...</div></div>
+      </div>
+
+      <!-- STEP 3: Outline -->
+      <div id="step-3" class="step-panel hidden">
+        <div class="card"><div class="card-header"><i class="fas fa-list-ol"></i> Bước 3 — Dàn ý bài viết</div><div id="outline-result" class="md-preview loading-overlay"><div class="spinner"></div>Đang tạo dàn ý...</div></div>
+      </div>
+
+      <!-- STEP 4: Review -->
+      <div id="step-4" class="step-panel hidden">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-check-double"></i> Bước 4 — Đánh giá & Chỉnh sửa</div>
+          <div id="review-manual">
+            <div class="outline-editor">
+              <div class="outline-editor-tabs">
+                <button class="outline-editor-tab active" onclick="switchOutlineTab('edit')" id="outline-tab-edit"><i class="fas fa-edit"></i> Chỉnh sửa</button>
+                <button class="outline-editor-tab" onclick="switchOutlineTab('preview')" id="outline-tab-preview"><i class="fas fa-eye"></i> Xem trước</button>
+                <span class="edit-indicator hidden" id="outline-edit-indicator">● Đã chỉnh sửa</span>
+              </div>
+              <textarea class="outline-edit-area" id="outline-edit-textarea" placeholder="Nội dung outline..." oninput="onOutlineEdited()"></textarea>
+              <div class="outline-preview-area md-preview hidden" id="outline-preview-area"></div>
+            </div>
+            <div class="form-group"><label>Ghi chú cho AI (tùy chọn)</label><textarea id="s-review-notes" rows="3" placeholder="Nhập ghi chú để AI lưu ý khi viết bài..."></textarea></div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="btnWithLoading(this, approveOutline)" id="btn-approve"><i class="fas fa-play"></i> <span class="btn-text">Viết bài ngay</span></button>
+              <button class="btn btn-accent" onclick="btnWithLoading(this, saveOutlineOnly)" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none" id="btn-save-outline"><i class="fas fa-save"></i> <span class="btn-text">Lưu outline, viết sau</span></button>
+              <button class="btn btn-secondary" onclick="btnWithLoading(this, aiEvaluate)" id="btn-ai-eval"><i class="fas fa-star"></i> <span class="btn-text">AI đánh giá</span></button>
+              <button class="btn btn-secondary" onclick="btnWithLoading(this, regenerateOutline)" id="btn-regen"><i class="fas fa-redo"></i> <span class="btn-text">Tạo lại</span></button>
+            </div>
+          </div>
+          <div id="review-auto" class="hidden">
+            <div class="loading-overlay" id="auto-review-loading"><div class="spinner"></div>AI đang tự đánh giá...</div>
+            <div id="auto-review-timeline" class="timeline"></div>
+            <div id="auto-review-actions" class="hidden" style="margin-top:1rem">
+              <div style="padding:.75rem;background:rgba(76,175,80,0.1);border:1px solid var(--success);border-radius:8px;margin-bottom:.75rem">
+                <strong style="color:var(--success)">✅ Dàn ý đã được duyệt tự động</strong>
+              </div>
+              <div id="auto-review-outline-preview" class="md-preview" style="max-height:300px;overflow-y:auto;margin-bottom:1rem;border:1px solid var(--border);padding:.75rem;border-radius:6px"></div>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="btnWithLoading(this, continueAfterReview)"><i class="fas fa-play"></i> <span class="btn-text">Viết bài ngay</span></button>
+                <button class="btn btn-accent" onclick="btnWithLoading(this, saveOutlineOnly)" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none"><i class="fas fa-save"></i> <span class="btn-text">Lưu outline, viết sau</span></button>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="switchToManual()" id="btn-switch-manual">Chuyển sang duyệt thủ công</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Article -->
+      <div id="step-5" class="step-panel hidden">
+        <div class="card"><div class="card-header"><i class="fas fa-file-alt"></i> Bước 5 — Viết bài</div><div id="article-result" class="md-preview loading-overlay"><div class="spinner"></div>Đang viết bài...</div></div>
+      </div>
+
+      <!-- STEP 6: Images -->
+      <div id="step-6" class="step-panel hidden">
+        <div class="card"><div class="card-header"><i class="fas fa-images"></i> Bước 6 — Tạo hình ảnh</div><div id="image-result" class="loading-overlay"><div class="spinner"></div>Đang tạo hình ảnh...</div></div>
+      </div>
+
+      <!-- STEP 7: Result -->
+      <div id="step-7" class="step-panel hidden">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-trophy"></i> Bước 7 — Kết quả</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+            <span class="badge badge-success" id="word-count-badge"></span>
+            <span class="badge badge-info" id="img-count-badge"></span>
+            <span class="edit-indicator hidden" id="article-edit-indicator">● Đã chỉnh sửa</span>
+          </div>
+          <div class="article-editor">
+            <div class="article-editor-tabs">
+              <button class="article-editor-tab active" onclick="switchArticleTab('preview')" id="article-tab-preview"><i class="fas fa-eye"></i> Xem trước</button>
+              <button class="article-editor-tab" onclick="switchArticleTab('edit')" id="article-tab-edit"><i class="fas fa-edit"></i> Chỉnh sửa Markdown</button>
+            </div>
+            <div id="final-article" class="article-preview-area md-preview"></div>
+            <textarea class="article-edit-area hidden" id="article-edit-textarea" placeholder="Nội dung bài viết..." oninput="onArticleEdited()"></textarea>
+          </div>
+          <!-- Image Manager -->
+          <div class="img-manager" id="img-manager-panel" style="display:none">
+            <div class="img-manager-header">
+              <strong><i class="fas fa-images"></i> Quản lý hình ảnh (<span id="img-manager-count">0</span>)</strong>
+            </div>
+            <div id="img-manager-list"></div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0">
+            <button class="btn btn-sm btn-secondary" onclick="copyResult('md')"><i class="fas fa-copy"></i> <span class="btn-text">Copy MD</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="copyResult('html')"><i class="fas fa-code"></i> <span class="btn-text">Copy HTML</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="downloadResult('md')"><i class="fas fa-download"></i> <span class="btn-text">Tải .md</span></button>
+            <button class="btn btn-sm btn-secondary" onclick="downloadResult('html')"><i class="fas fa-download"></i> <span class="btn-text">Tải .html</span></button>
+            <button class="btn btn-sm btn-primary" onclick="btnWithLoading(this, saveToDb)"><i class="fas fa-database"></i> <span class="btn-text">Lưu vào DB</span></button>
+            <button class="btn btn-sm btn-primary" onclick="showWpPublishModal()"><i class="fab fa-wordpress"></i> <span class="btn-text">Đăng WP</span></button>
+          </div>
+          <div class="card" style="background:var(--surface2)">
+            <div class="card-header"><i class="fas fa-lightbulb"></i> Gợi ý keyword tiếp theo</div>
+            <div id="keyword-suggestions">Đang tải...</div>
+          </div>
+          <button class="btn btn-secondary btn-full" onclick="resetPipeline()" style="margin-top:1rem"><i class="fas fa-redo"></i> <span class="btn-text">Bắt đầu bài mới</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: BATCH MODE ═══ -->
+    <div class="tab-content" id="tab-batch">
+
+      <!-- PHASE 1: Config + Start (All processing runs in background via sidebar) -->
+      <div id="batch-phase-1">
+        <div class="card">
+          <div class="card-header"><i class="fas fa-layer-group"></i> Viết hàng loạt</div>
+          <div class="form-group"><label>Danh sách keyword * <span id="b-kw-count" style="color:var(--text2);font-weight:400"></span></label>
+            <textarea id="b-keywords" rows="6" placeholder="Mỗi dòng 1 keyword (tối đa 50)&#10;kệ kho hàng&#10;kệ để hàng&#10;giá kệ để hàng" oninput="updateBatchKwCount()"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="form-group"><label>Lĩnh vực *</label><input id="b-field" placeholder="VD: Nội thất, Y tế..."></div>
+            <div class="form-group"><label>Công ty / Thương hiệu</label><input id="b-company"></div>
+            <div class="form-group"><label>Văn phong</label><input id="b-style" placeholder="VD: chuyên gia, thân thiện..."></div>
+            <div class="form-group"><label>Chọn Topic</label><select id="b-topic"><option value="">— Không chọn —</option></select></div>
+          </div>
+          <div class="form-group"><label>Thông tin tham khảo</label><textarea id="b-reference" rows="3" placeholder="Dán nội dung tham khảo (max 6000 ký tự)" maxlength="6000"></textarea></div>
+          <!-- Skip AI Grouping Toggle -->
+          <div class="toggle-card" onclick="toggleSwitch('b-skip-grouping-toggle')" style="margin-bottom:.75rem">
+            <div><strong>🔤 Mỗi keyword = 1 bài</strong><br><small id="b-skip-grouping-label" style="color:var(--text2)">Tắt — AI sẽ phân nhóm keyword tương tự thành 1 bài</small></div>
+            <div class="toggle-switch" id="b-skip-grouping-toggle"></div>
+          </div>
+
+          <div class="toggle-card" onclick="toggleSwitch('b-review-toggle')" style="margin-bottom:.75rem">
+            <div><strong>Chế độ review</strong><br><small id="b-review-label" style="color:var(--text2)">AI tự động duyệt</small></div>
+            <div class="toggle-switch on" id="b-review-toggle"></div>
+          </div>
+          <div class="toggle-card" onclick="toggleSwitch('b-image-toggle')" style="margin-bottom:.75rem">
+            <div><strong>Tạo hình ảnh minh họa</strong><br><small style="color:var(--text2)">Mặc định TẮT cho batch để nhanh hơn</small></div>
+            <div class="toggle-switch" id="b-image-toggle"></div>
+          </div>
+
+          <!-- Full Pipeline Toggle -->
+          <div class="toggle-card batch-fullpipeline-card" onclick="toggleSwitch('b-fullpipeline-toggle')" style="margin-bottom:.75rem">
+            <div><strong>🔄 Full Pipeline</strong><br><small id="b-fullpipeline-label" style="color:var(--text2)">Tắt — Dừng sau khi phân nhóm để xác nhận</small></div>
+            <div class="toggle-switch" id="b-fullpipeline-toggle"></div>
+          </div>
+
+          <!-- WP Site Selector (for Full Pipeline) -->
+          <div class="form-group" id="b-wp-site-group" style="display:none">
+            <label><i class="fab fa-wordpress" style="color:#21759b"></i> Đăng tự động lên WordPress</label>
+            <select id="b-wp-site"><option value="">— Không đăng WP —</option></select>
+            <small style="color:var(--text2);display:block;margin-top:.25rem">Khi bật Full Pipeline, bài viết sẽ tự động đăng lên WP site đã chọn</small>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible('b-adv-opts')"><i class="fas fa-chevron-right"></i> Tùy chọn nâng cao</div>
+          <div class="collapsible-body" id="b-adv-opts">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:.5rem 0">
+              <div class="form-group"><label>Bot phân tích</label><select id="b-intentBot"></select></div>
+              <div class="form-group"><label>Bot dàn ý</label><select id="b-outlineBot"></select></div>
+              <div class="form-group"><label>Bot đánh giá</label><select id="b-evalBot"></select></div>
+              <div class="form-group"><label>Bot viết bài</label><select id="b-articleBot"></select></div>
+              <div class="form-group"><label>Bot prompt ảnh</label><select id="b-imagePromptBot"></select></div>
+              <div class="form-group"><label>Bot ảnh</label><select id="b-imageBot"></select></div>
+            </div>
+          </div>
+
+          <!-- Internal Links Section (Batch) -->
+          <div class="collapsible-header" onclick="toggleCollapsible('b-internal-links')" style="margin-top:.75rem"><i class="fas fa-chevron-right"></i> 🔗 Internal Links</div>
+          <div class="collapsible-body open" id="b-internal-links">
+            <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;cursor:pointer">
+              <input type="checkbox" id="b-enable-links" checked> Tự động chèn internal link
+            </label>
+            <div id="b-urls-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:.5rem;margin-bottom:.75rem;background:var(--surface2)"></div>
+            <p style="font-size:.75rem;color:var(--text2);margin-bottom:.5rem">⭐ = URL ưu tiên (luôn chèn vào bài)</p>
+            <details style="margin-bottom:.75rem">
+              <summary style="cursor:pointer;font-weight:600;font-size:.875rem">➕ Thêm URL mới</summary>
+              <div style="padding:.5rem 0">
+                <div class="form-group"><label>URL *</label><input id="b-new-url" placeholder="https://example.com/bai-viet"></div>
+                <div class="form-group"><label>Tiêu đề *</label><input id="b-new-url-title" placeholder="Tên bài viết"></div>
+                <div class="form-group"><label>Keyword</label><input id="b-new-url-kw" placeholder="Từ khóa"></div>
+                <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;cursor:pointer">
+                  <input type="checkbox" id="b-new-url-priority"> URL ưu tiên
+                </label>
+                <button class="btn btn-sm btn-primary" onclick="addSingleUrl('b')"><i class="fas fa-plus"></i> Thêm URL</button>
+              </div>
+            </details>
+            <details style="margin-bottom:.5rem">
+              <summary style="cursor:pointer;font-weight:600;font-size:.875rem">⚡ Thêm nhanh</summary>
+              <div style="padding:.5rem 0">
+                <textarea id="b-bulk-urls" rows="3" placeholder="https://example.com/bai-1 | Bài viết 1" style="font-size:.85rem"></textarea>
+                <button class="btn btn-sm btn-primary" onclick="addBulkUrls('b')" style="margin-top:.375rem"><i class="fas fa-plus"></i> Thêm tất cả</button>
+              </div>
+            </details>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="batchStart()" id="btn-batch-start" style="margin-top:1rem"><i class="fas fa-rocket"></i> <span class="btn-text">Bắt đầu chạy ngầm</span></button>
+          <p style="font-size:.8rem;color:var(--text2);text-align:center;margin-top:.5rem">💡 Pipeline chạy ngầm — bạn có thể tiếp tục nhập batch mới hoặc viết bài đơn lẻ</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ TAB: HISTORY ═══ -->
+    <div class="tab-content" id="tab-history">
+      <div class="card">
+        <div class="card-header"><i class="fas fa-clock-rotate-left"></i> Lịch sử bài viết</div>
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <select id="h-status-filter" onchange="loadHistory()" style="padding:.5rem;border:1px solid var(--border);border-radius:6px;background:var(--surface)">
+            <option value="">Tất cả</option>
+            <option value="outline_only">📝 Chỉ outline</option>
+            <option value="draft">📄 Bản nháp</option>
+            <option value="published">✅ Đã xuất bản</option>
+          </select>
+          <input id="h-search" placeholder="Tìm kiếm..." style="flex:1;padding:.5rem;border:1px solid var(--border);border-radius:6px;background:var(--surface)">
+          <button class="btn btn-sm btn-primary" onclick="loadHistory()"><i class="fas fa-search"></i></button>
+        </div>
+        <label id="h-select-all-wrap" class="hidden">
+          <input type="checkbox" id="h-select-all" onchange="historyToggleSelectAll(this.checked)">
+          <span>☐ Chọn tất cả outline chưa viết</span>
+        </label>
+        <table class="data-table"><thead><tr><th style="width:36px"></th><th>#</th><th>Keyword</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead><tbody id="history-table"></tbody></table>
+        <div id="history-pagination" style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem"></div>
+      </div>
+      <!-- Sticky Action Bar -->
+      <div id="history-action-bar" class="history-action-bar hidden">
+        <span id="history-selected-count">Đã chọn: 0 outline</span>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="historyWriteSingleSequential()"><i class="fas fa-pen-fancy"></i> Viết bài đơn lẻ lần lượt</button>
+          <button class="btn btn-accent" onclick="historyWriteBatch()"><i class="fas fa-boxes-stacked"></i> Viết hàng loạt</button>
+          <button class="btn btn-danger" onclick="historyDeleteSelected()"><i class="fas fa-trash"></i> Xóa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: ADMIN ═══ -->
+    <div class="tab-content" id="tab-admin">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchAdminTab('stats')">Tổng quan</button>
+        <button class="sub-tab" onclick="switchAdminTab('users')">Users</button>
+        <button class="sub-tab" onclick="switchAdminTab('apikeys')">API Keys</button>
+        <button class="sub-tab" onclick="switchAdminTab('prompts')">Prompts</button>
+        <button class="sub-tab" onclick="switchAdminTab('topics')">Topics</button>
+        <button class="sub-tab" onclick="switchAdminTab('urls')">URLs</button>
+        <button class="sub-tab" onclick="switchAdminTab('wp')">WP Sites</button>
+        <button class="sub-tab" onclick="switchAdminTab('bots')">Bot AI</button>
+      </div>
+      <div id="admin-content"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR PHẢI -->
+  <aside id="pipeline-sidebar">
+    <div class="sidebar-header">
+      <strong>📋 Danh sách tiến trình</strong>
+      <button class="btn btn-sm sidebar-close-btn" onclick="toggleSidebar()" title="Đóng"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="sidebar-cards">
+      <div class="sidebar-empty" id="sidebar-empty">
+        <i class="fas fa-inbox" style="font-size:2rem;opacity:.3;margin-bottom:.5rem"></i>
+        <p>Chưa có tiến trình nào.<br>Bắt đầu tạo nội dung để xem tiến trình tại đây.</p>
+      </div>
+    </div>
+  </aside>
+  </div><!-- /app-layout -->
+
+  <!-- Mobile sidebar toggle -->
+  <button id="sidebar-toggle-btn" class="sidebar-toggle-fab" onclick="toggleSidebar()" title="Danh sách tiến trình">
+    <i class="fas fa-clipboard-list"></i>
+    <span id="sidebar-badge" class="sidebar-badge hidden">0</span>
+  </button>
+
+  <footer id="app-footer">
+    <span id="quota-text">Quota: --</span>
+    <div class="quota-bar"><div class="quota-fill" id="quota-fill" style="width:0"></div></div>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+<script src="batch.js"></script>
+</body>
+</html>
