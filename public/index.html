@@ -17,10 +17,27 @@
   <div class="login-card">
     <h1><i class="fas fa-feather-alt"></i> ContentForge</h1>
     <p>Nền tảng tạo nội dung SEO chuyên nghiệp</p>
-    <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="login-user" placeholder="admin" style="font-size:16px"></div>
-    <div class="form-group"><label>Mật khẩu</label><input type="password" id="login-pass" placeholder="••••••" style="font-size:16px"></div>
-    <div class="error-msg" id="login-error"></div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:.5rem"><i class="fas fa-sign-in-alt"></i> Đăng nhập</button>
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="form-group"><label>Tên đăng nhập / Email</label><input type="text" id="login-user" placeholder="admin hoặc email@example.com" style="font-size:16px"></div>
+      <div class="form-group"><label>Mật khẩu</label><input type="password" id="login-pass" placeholder="••••••" style="font-size:16px"></div>
+      <div class="error-msg" id="login-error"></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:.5rem"><i class="fas fa-sign-in-alt"></i> Đăng nhập</button>
+      <p id="register-link" style="text-align:center;margin-top:1rem;font-size:.875rem;color:var(--text2)">
+        Chưa có tài khoản? <a href="#" onclick="toggleAuthForm('register');return false" style="color:var(--accent);font-weight:600">Đăng ký ngay</a>
+      </p>
+    </div>
+    <!-- REGISTER FORM -->
+    <div id="register-form" class="hidden">
+      <div class="form-group"><label>Email *</label><input type="email" id="reg-email" placeholder="email@example.com" style="font-size:16px"></div>
+      <div class="form-group"><label>Mật khẩu * (tối thiểu 6 ký tự)</label><input type="password" id="reg-pass" placeholder="••••••" style="font-size:16px"></div>
+      <div class="form-group"><label>Tên hiển thị</label><input type="text" id="reg-name" placeholder="Tên của bạn" style="font-size:16px"></div>
+      <div class="error-msg" id="register-error"></div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()" style="margin-top:.5rem"><i class="fas fa-user-plus"></i> Đăng ký</button>
+      <p style="text-align:center;margin-top:1rem;font-size:.875rem;color:var(--text2)">
+        Đã có tài khoản? <a href="#" onclick="toggleAuthForm('login');return false" style="color:var(--accent);font-weight:600">Đăng nhập</a>
+      </p>
+    </div>
   </div>
 </div>
 
@@ -38,6 +55,7 @@
     <button class="nav-tab active" data-tab="single" onclick="switchTab('single')"><i class="fas fa-pen-fancy"></i> Viết bài</button>
     <button class="nav-tab" data-tab="batch" onclick="switchTab('batch')"><i class="fas fa-layer-group"></i> Viết hàng loạt</button>
     <button class="nav-tab" data-tab="history" onclick="switchTab('history')"><i class="fas fa-clock-rotate-left"></i> Lịch sử</button>
+    <button class="nav-tab hidden" data-tab="owner" onclick="switchTab('owner')" id="owner-tab"><i class="fas fa-users"></i> Nhóm của tôi</button>
     <button class="nav-tab hidden" data-tab="admin" onclick="switchTab('admin')" id="admin-tab"><i class="fas fa-cog"></i> Quản trị</button>
   </nav>
 
@@ -160,6 +178,35 @@
               <button class="btn btn-secondary" onclick="btnWithLoading(this, aiEvaluate)" id="btn-ai-eval"><i class="fas fa-star"></i> <span class="btn-text">AI đánh giá</span></button>
               <button class="btn btn-secondary" onclick="btnWithLoading(this, regenerateOutline)" id="btn-regen"><i class="fas fa-redo"></i> <span class="btn-text">Tạo lại</span></button>
             </div>
+            <!-- AI Evaluation Results Panel (persistent, survives reload) -->
+            <div id="ai-eval-panel" class="hidden" style="margin-top:1rem;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <div style="background:var(--surface2);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center">
+                <strong><i class="fas fa-star" style="color:var(--accent)"></i> Đánh giá AI</strong>
+                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('ai-eval-panel').classList.add('hidden')" style="padding:.25rem .5rem"><i class="fas fa-times"></i></button>
+              </div>
+              <div id="ai-eval-content" style="padding:1rem"></div>
+              <div id="ai-eval-actions" style="padding:0 1rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap"></div>
+            </div>
+            <!-- Outline Comparison Panel (shows after optimization) -->
+            <div id="outline-compare-panel" class="hidden" style="margin-top:1rem;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <div style="background:var(--surface2);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center">
+                <strong><i class="fas fa-columns" style="color:var(--accent)"></i> So sánh Outline</strong>
+                <div style="display:flex;gap:.5rem;align-items:center">
+                  <button class="btn btn-sm btn-secondary" onclick="useOriginalOutline()" style="padding:.25rem .5rem"><i class="fas fa-undo"></i> Dùng bản gốc</button>
+                  <button class="btn btn-sm btn-secondary" onclick="document.getElementById('outline-compare-panel').classList.add('hidden')" style="padding:.25rem .5rem"><i class="fas fa-times"></i></button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;max-height:70vh;overflow-y:auto">
+                <div style="padding:.75rem;border-right:1px solid var(--border)">
+                  <div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase">📄 Outline gốc</div>
+                  <div id="outline-compare-original" class="md-preview" style="font-size:.85rem"></div>
+                </div>
+                <div style="padding:.75rem">
+                  <div style="font-size:.75rem;font-weight:600;color:var(--success);margin-bottom:.5rem;text-transform:uppercase">✨ Outline tối ưu</div>
+                  <div id="outline-compare-optimized" class="md-preview" style="font-size:.85rem"></div>
+                </div>
+              </div>
+            </div>
           </div>
           <div id="review-auto" class="hidden">
             <div class="loading-overlay" id="auto-review-loading"><div class="spinner"></div>AI đang tự đánh giá...</div>
@@ -271,6 +318,14 @@
           <div class="form-group" id="b-wp-site-group" style="display:none">
             <label><i class="fab fa-wordpress" style="color:#21759b"></i> Đăng tự động lên WordPress</label>
             <select id="b-wp-site"><option value="">— Không đăng WP —</option></select>
+            <div style="display:flex;gap:.75rem;margin-top:.5rem;align-items:center" id="b-wp-status-group">
+              <label style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.85rem">
+                <input type="radio" name="b-wp-status" value="publish" checked> <i class="fas fa-globe" style="color:var(--success)"></i> Đăng ngay
+              </label>
+              <label style="display:flex;align-items:center;gap:.25rem;cursor:pointer;font-size:.85rem">
+                <input type="radio" name="b-wp-status" value="draft"> <i class="fas fa-file-alt" style="color:var(--warning)"></i> Bản nháp
+              </label>
+            </div>
             <small style="color:var(--text2);display:block;margin-top:.25rem">Khi bật Full Pipeline, bài viết sẽ tự động đăng lên WP site đã chọn</small>
           </div>
 
@@ -333,31 +388,53 @@
             <option value="draft">📄 Bản nháp</option>
             <option value="published">✅ Đã xuất bản</option>
           </select>
+          <select id="h-topic-filter" onchange="loadHistory()" style="padding:.5rem;border:1px solid var(--border);border-radius:6px;background:var(--surface)">
+            <option value="">Tất cả chủ đề</option>
+          </select>
           <input id="h-search" placeholder="Tìm kiếm..." style="flex:1;padding:.5rem;border:1px solid var(--border);border-radius:6px;background:var(--surface)">
           <button class="btn btn-sm btn-primary" onclick="loadHistory()"><i class="fas fa-search"></i></button>
         </div>
-        <label id="h-select-all-wrap" class="hidden">
+        <label id="h-select-all-wrap" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;cursor:pointer;font-size:.875rem;padding:.5rem .75rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
           <input type="checkbox" id="h-select-all" onchange="historyToggleSelectAll(this.checked)">
-          <span>☐ Chọn tất cả outline chưa viết</span>
+          <span>Chọn tất cả trên trang này</span>
         </label>
-        <table class="data-table"><thead><tr><th style="width:36px"></th><th>#</th><th>Keyword</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead><tbody id="history-table"></tbody></table>
+        <table class="data-table"><thead><tr><th style="width:36px"></th><th>#</th><th>Keyword</th><th>Topic</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead><tbody id="history-table"></tbody></table>
         <div id="history-pagination" style="display:flex;justify-content:center;gap:.5rem;margin-top:1rem"></div>
       </div>
       <!-- Sticky Action Bar -->
       <div id="history-action-bar" class="history-action-bar hidden">
-        <span id="history-selected-count">Đã chọn: 0 outline</span>
+        <span id="history-selected-count">Đã chọn: 0 bài</span>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="historyWriteSingleSequential()"><i class="fas fa-pen-fancy"></i> Viết bài đơn lẻ lần lượt</button>
-          <button class="btn btn-accent" onclick="historyWriteBatch()"><i class="fas fa-boxes-stacked"></i> Viết hàng loạt</button>
+          <button class="btn btn-primary" onclick="historyWriteSingleSequential()" id="h-btn-write-single"><i class="fas fa-pen-fancy"></i> Viết bài lần lượt</button>
+          <button class="btn btn-accent" onclick="historyWriteBatch()" id="h-btn-write-batch"><i class="fas fa-boxes-stacked"></i> Viết hàng loạt</button>
+          <button class="btn btn-primary" onclick="showBulkPublishModal()" id="h-btn-bulk-publish" style="background:#2563eb"><i class="fab fa-wordpress"></i> Đăng WP hàng loạt</button>
+          <button class="btn btn-secondary" onclick="showBulkScheduleModal()" id="h-btn-schedule"><i class="fas fa-calendar-alt"></i> Lên lịch đăng</button>
           <button class="btn btn-danger" onclick="historyDeleteSelected()"><i class="fas fa-trash"></i> Xóa</button>
         </div>
       </div>
+    </div>
+
+    <!-- ═══ TAB: OWNER WORKSPACE ═══ -->
+    <div class="tab-content" id="tab-owner">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchOwnerTab('stats')"><i class="fas fa-chart-pie"></i> Tổng quan</button>
+        <button class="sub-tab" onclick="switchOwnerTab('members')"><i class="fas fa-users"></i> Members</button>
+        <button class="sub-tab" onclick="switchOwnerTab('history')"><i class="fas fa-clock-rotate-left"></i> Lịch sử nhóm</button>
+        <button class="sub-tab" onclick="switchOwnerTab('queue')"><i class="fas fa-tasks"></i> Queue</button>
+        <button class="sub-tab" onclick="switchOwnerTab('wp')"><i class="fab fa-wordpress"></i> WP Sites</button>
+        <button class="sub-tab" onclick="switchOwnerTab('topics')"><i class="fas fa-tags"></i> Topics</button>
+      </div>
+      <div id="owner-content"></div>
     </div>
 
     <!-- ═══ TAB: ADMIN ═══ -->
     <div class="tab-content" id="tab-admin">
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="switchAdminTab('stats')">Tổng quan</button>
+        <button class="sub-tab" onclick="switchAdminTab('purchase-requests')">🛒 Yêu cầu mua <span id="admin-pr-badge" class="hidden" style="background:var(--error);color:#fff;border-radius:999px;padding:0 .4rem;font-size:.7rem;margin-left:.25rem">0</span></button>
+        <button class="sub-tab" onclick="switchAdminTab('point-costs')">💰 Point Costs</button>
+        <button class="sub-tab" onclick="switchAdminTab('point-packages')">🛒 Gói Points</button>
+        <button class="sub-tab" onclick="switchAdminTab('queue')">🔄 Queue Monitor</button>
         <button class="sub-tab" onclick="switchAdminTab('users')">Users</button>
         <button class="sub-tab" onclick="switchAdminTab('apikeys')">API Keys</button>
         <button class="sub-tab" onclick="switchAdminTab('prompts')">Prompts</button>
@@ -365,6 +442,7 @@
         <button class="sub-tab" onclick="switchAdminTab('urls')">URLs</button>
         <button class="sub-tab" onclick="switchAdminTab('wp')">WP Sites</button>
         <button class="sub-tab" onclick="switchAdminTab('bots')">Bot AI</button>
+        <button class="sub-tab" onclick="switchAdminTab('app-settings')">⚙ Cài đặt</button>
       </div>
       <div id="admin-content"></div>
     </div>
@@ -392,9 +470,26 @@
   </button>
 
   <footer id="app-footer">
-    <span id="quota-text">Quota: --</span>
-    <div class="quota-bar"><div class="quota-fill" id="quota-fill" style="width:0"></div></div>
+    <div style="display:flex;align-items:center;gap:.75rem;flex:1">
+      <span id="points-text" style="font-weight:600;font-size:.85rem">💰 -- pts</span>
+      <span id="points-pool-info" style="font-size:.75rem;color:var(--text2)"></span>
+    </div>
+    <button id="points-buy-btn" class="btn btn-sm" onclick="showPointsModal()"
+      style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;white-space:nowrap;font-size:.75rem;padding:.25rem .75rem;border-radius:999px">
+      🛒 Mua thêm Points
+    </button>
   </footer>
+
+  <!-- POINTS MODAL -->
+  <div id="upgrade-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+    <div style="background:var(--surface);border-radius:1rem;padding:2rem;max-width:780px;width:96%;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <h2 style="margin:0;font-size:1.25rem">💰 Points Center</h2>
+        <button onclick="closeUpgradeModal()" style="background:none;border:none;color:var(--text2);font-size:1.5rem;cursor:pointer">×</button>
+      </div>
+      <div id="upgrade-modal-body">Đang tải...</div>
+    </div>
+  </div>
 </div>
 
 <script src="app.js"></script>

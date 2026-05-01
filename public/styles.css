@@ -34,6 +34,7 @@ input,textarea,select{font-family:inherit;font-size:1rem;color:var(--text)}
 .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 .btn-secondary:hover{background:var(--border)}
 .btn-danger{background:var(--error);color:#FFF}
+.btn-warning{background:#f59e0b;color:#FFF}.btn-warning:hover{background:#d97706;transform:translateY(-1px)}
 .btn-sm{padding:.375rem .75rem;font-size:.8125rem}
 .btn-full{width:100%;justify-content:center}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
