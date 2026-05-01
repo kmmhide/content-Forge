@@ -312,7 +312,7 @@ function createSlug(str) {
 
 // ═══════ IMAGE OPTIMIZATION & UPLOAD ═══════
 async function processAndUploadImage(originalUrl, wpConfigId, heading) {
-  if (!wpConfigId) return originalUrl; // Bỏ qua nếu không chọn WP Site
+  if (!wpConfigId) return { url: originalUrl, id: null }; // Bỏ qua nếu không chọn WP Site
 
   try {
     const sharp = require('sharp');
@@ -640,9 +640,7 @@ async function continueAfterApproval(pipelineId, signal) {
               const content = (await imgR.json()).choices?.[0]?.message?.content || '';
               let url = content.match(/https?:\/\/[^\s)]+/)?.[0];
               if (url) {
-                // Xử lý và upload ảnh nếu có WP config (Full Pipeline)
-                const processed = await processAndUploadImage(url, cfg.fullPipeline ? cfg.wpConfigId : null, s.heading);
-                images.push({ heading: s.heading, url: processed.url, prompt: imgPromptText, mediaId: processed.id });
+                images.push({ heading: s.heading, url: url, prompt: imgPromptText, mediaId: null });
                 success = true;
               }
             } catch (e) {}
@@ -1042,8 +1040,7 @@ async function runBatchPipeline(pipelineId, signal) {
                     const content = (await imgR.json()).choices?.[0]?.message?.content || '';
                     let url = content.match(/https?:\/\/[^\s)]+/)?.[0];
                     if (url) { 
-                      const processed = await processAndUploadImage(url, cfg.fullPipeline ? cfg.wpConfigId : null, s.heading);
-                      images.push({ heading: s.heading, url: processed.url, prompt: imgPromptText, mediaId: processed.id }); 
+                      images.push({ heading: s.heading, url: url, prompt: imgPromptText, mediaId: null }); 
                       break; 
                     }
                   } catch {}
@@ -1088,13 +1085,45 @@ async function runBatchPipeline(pipelineId, signal) {
             if (article) {
               const cleanPass = (wpCfg.app_password || '').replace(/\s+/g, '');
               const intendedSlug = createSlug(article.keyword);
-              let featuredMediaId = null;
-              try {
-                const imgs = JSON.parse(article.images || '[]');
-                if (imgs.length > 0 && imgs[0].mediaId) featuredMediaId = imgs[0].mediaId;
-              } catch(e) {}
+
+              // Xử lý và upload ảnh từ POE lên WP trước khi publish
+              let md = article.article || '';
+              let html = article.article_html || md;
+              const urlRegex = /https?:\/\/[a-zA-Z0-9.-]*poecdn\.net[^\s"'\)]+/g;
+              const poeUrls = [...new Set((md.match(urlRegex) || []).concat(html.match(urlRegex) || []))];
               
-              const wpPayload = { title: article.keyword, content: article.article_html, status: wpPostStatus, slug: intendedSlug };
+              let imagesArr = [];
+              try { imagesArr = JSON.parse(article.images || '[]'); } catch(e) {}
+              let featuredMediaId = null;
+
+              if (poeUrls.length > 0) {
+                let updated = false;
+                for (const poeUrl of poeUrls) {
+                  const processed = await processAndUploadImage(poeUrl, wpCfg.id, article.keyword);
+                  if (processed && processed.url && processed.url !== poeUrl) {
+                    md = md.split(poeUrl).join(processed.url);
+                    html = html.split(poeUrl).join(processed.url);
+                    for (let img of imagesArr) {
+                      if (img.url === poeUrl) {
+                        img.url = processed.url;
+                        img.mediaId = processed.id;
+                      }
+                    }
+                    if (!featuredMediaId) featuredMediaId = processed.id;
+                    updated = true;
+                  }
+                }
+                if (updated) {
+                  deps.dbRun('UPDATE articles SET article=?, article_html=?, images=? WHERE id=?', 
+                    [md, html, JSON.stringify(imagesArr), article.id]);
+                }
+              }
+              
+              if (!featuredMediaId && imagesArr.length > 0 && imagesArr[0].mediaId) {
+                featuredMediaId = imagesArr[0].mediaId;
+              }
+
+              const wpPayload = { title: article.keyword, content: html, status: wpPostStatus, slug: intendedSlug };
               if (featuredMediaId) wpPayload.featured_media = featuredMediaId;
 
               const wpRes = await fetch(`${wpCfg.site_url}/wp-json/wp/v2/posts`, {
